@@ -1,2 +1,17 @@
-# 使用Golang识别滑块
-此项目是[pypi-ddddocr](https://github.com/sml2h3/ddddocr)滑块部分的golang实现
+# GoServerBase
+
+一个基于gin的Web服务开发模板
+
+### Lint(代码格式检查)
+
+#### 手动格式化+lint检测
+
+```shell
+gofmt -w .
+gci write . -s standard -s default
+golangci-lint run --config .golangci.yml
+```
+
+#### 集成到IDE中
+
+[配置方法](https://golangci-lint.run/welcome/integrations/)

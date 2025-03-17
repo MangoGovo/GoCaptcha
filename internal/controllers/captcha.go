@@ -1,17 +1,46 @@
-package main
+package controllers
 
 import (
+	"github.com/gin-gonic/gin"
+	"gocaptcha/internal/exceptions"
+	"gocaptcha/internal/utils/response"
 	"gocv.io/x/gocv"
 	"image"
 )
 
-type SlideResult struct {
+func Captcha(c *gin.Context) {
+	bgImage, err := c.FormFile("background")
+	if err != nil {
+		response.AbortWithException(c, exceptions.ParamsError, err)
+		return
+	}
+
+	targetImage, err := c.FormFile("target")
+	if err != nil {
+		response.AbortWithException(c, exceptions.ParamsError, err)
+		return
+	}
+
+	bgFile, _ := bgImage.Open()
+	targetFile, _ := targetImage.Open()
+	var bgBytes, targetBytes []byte
+
+	_, _ = bgFile.Read(bgBytes)
+	_, _ = targetFile.Read(targetBytes)
+
+	result, err := slideMatch(bgBytes, targetBytes)
+	response.JsonSuccess(c, result)
+}
+
+// slideResult 滑块匹配结果
+type slideResult struct {
 	TargetX int
 	TargetY int
 	Target  []int
 }
 
-func SlideMatch(backgroundBytes []byte, targetBytes []byte) (*SlideResult, error) {
+// slideMatch 滑块匹配
+func slideMatch(backgroundBytes []byte, targetBytes []byte) (*slideResult, error) {
 	// 解码目标图像
 	targetMat, err := gocv.IMDecode(targetBytes, gocv.IMReadAnyColor)
 	if err != nil {
@@ -61,7 +90,7 @@ func SlideMatch(backgroundBytes []byte, targetBytes []byte) (*SlideResult, error
 	h, w := targetRGB.Rows(), targetRGB.Cols()
 	bottomRight := image.Point{X: maxLoc.X + w, Y: maxLoc.Y + h}
 
-	return &SlideResult{
+	return &slideResult{
 		TargetX: 0,
 		TargetY: 0,
 		Target:  []int{maxLoc.X, maxLoc.Y, bottomRight.X, bottomRight.Y},
